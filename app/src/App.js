@@ -7,7 +7,9 @@ import Escrow from './Escrow';
 
 const provider = new BrowserProvider(window.ethereum);
 
+
 export async function approve(escrowContract, signer) {
+  
   const approveTxn = await escrowContract.connect(signer).approve();
   await approveTxn.wait();
 }
@@ -20,6 +22,11 @@ function App() {
   useEffect(() => {
     async function getAccounts() {
       const accounts = await provider.send('eth_requestAccounts', []);
+      console.log(accounts);
+
+      // In ethers.js v6, getSigner() returns a Promise and must be awaited
+      const signerObj = await provider.getSigner();
+      console.log("Signer Object:", signerObj);
 
       setAccount(accounts[0]);
       setSigner(provider.getSigner());
@@ -28,10 +35,13 @@ function App() {
     getAccounts();
   }, [account]);
 
+  
   async function newContract() {
     const beneficiary = document.getElementById('beneficiary').value;
     const arbiter = document.getElementById('arbiter').value;
     const value = BigInt(document.getElementById('wei').value);
+    console.log('value is: ', value);
+    
     const escrowContract = await deploy(signer, arbiter, beneficiary, value);
 
 
