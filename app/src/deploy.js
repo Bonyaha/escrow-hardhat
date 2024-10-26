@@ -1,21 +1,5 @@
 import { ethers } from 'ethers';
 import Escrow from './artifacts/contracts/Escrow.sol/Escrow';
-/* 
-export default async function deploy(signer, arbiter, beneficiary, value) {
-  console.log('signer is: ', signer);
-  console.log('arbiter is :', arbiter);
-  
-  
-  const factory = new ethers.ContractFactory(
-    Escrow.abi,
-    Escrow.bytecode,
-    signer
-  );
-  console.log(factory);
-  
-  return factory.deploy(arbiter, beneficiary, { value });
-}
- */
 
 
 export default async function deploy(signer, arbiter, beneficiary, value) {
@@ -47,3 +31,5 @@ export default async function deploy(signer, arbiter, beneficiary, value) {
     throw error; // Re-throw to handle in the UI
   }
 }
+
+//0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC

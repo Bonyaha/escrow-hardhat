@@ -5,6 +5,8 @@ export default function Escrow({
   value,
   handleApprove,
 }) {
+  console.log('Address is: ', address);
+  
   return (
     <div className="existing-contract">
       <ul className="fields">

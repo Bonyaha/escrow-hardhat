@@ -9,7 +9,12 @@ const provider = new BrowserProvider(window.ethereum);
 
 
 export async function approve(escrowContract, signer) {
-  
+  console.log('signer is: ', signer);
+  console.log('contract is: ', escrowContract);
+
+  const balance = await provider.getBalance("0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC");
+    console.log("Balance for beneficiar is: ", balance.toString());
+
   const approveTxn = await escrowContract.connect(signer).approve();
   await approveTxn.wait();
 }
@@ -18,51 +23,101 @@ function App() {
   const [escrows, setEscrows] = useState([]);
   const [account, setAccount] = useState();
   const [signer, setSigner] = useState();
+  const [arbiterObj, setArbiter] = useState();
 
+  //const arbiter = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8';
   useEffect(() => {
     async function getAccounts() {
       const accounts = await provider.send('eth_requestAccounts', []);
-      console.log(accounts);
+      console.log('Initial accounts:', accounts);
 
       // In ethers.js v6, getSigner() returns a Promise and must be awaited
       const signerObj = await provider.getSigner();
-      console.log("Signer Object:", signerObj);
+      const arbiterObj = await provider.getSigner(2);
+      //const arbiter = accounts[1];
+      console.log("Initial signer:", signerObj);
+      console.log('Arbiter object:', arbiterObj);
+      //console.log('Arbiter is: ', arbiter);
+
 
       setAccount(accounts[0]);
-      setSigner(provider.getSigner());
+      setSigner(signerObj);
+      setArbiter(arbiterObj);
     }
 
     getAccounts();
-  }, [account]);
 
-  
+
+    // Listen for account changes and update signer
+    /*  window.ethereum.on('accountsChanged', async (accounts) => {
+       console.log('Accounts changed:', accounts);
+ 
+       const signerObj = await provider.getSigner();
+       console.log('Updated signer after account change:', signerObj);
+ 
+       setAccount(accounts[0]);
+       setSigner(signerObj);
+     }); */
+
+    // Clean up the listener when the component is unmounted
+    /* return () => {
+      window.ethereum.removeListener('accountsChanged', () => { });
+    }; */
+  }, []);
+
+
   async function newContract() {
     const beneficiary = document.getElementById('beneficiary').value;
     const arbiter = document.getElementById('arbiter').value;
     const value = BigInt(document.getElementById('wei').value);
     console.log('value is: ', value);
-    
+
     const escrowContract = await deploy(signer, arbiter, beneficiary, value);
 
+    // Get the deployed contract address using getAddress()
+    const contractAddress = await escrowContract.getAddress();
+    console.log('deployed contract address: ', contractAddress);
+
+    const balance = await provider.getBalance(contractAddress);
+    console.log(`Contract balance for ${contractAddress}:`, balance.toString());
+
+    const approvedListener = (amount) => {
+      document.getElementById(contractAddress).className = 'complete';
+      document.getElementById(contractAddress).innerText = "✓ It's been approved!";
+    };
+
+    escrowContract.on('Approved', approvedListener);
 
     const escrow = {
-      address: escrowContract.address,
+      address: contractAddress,
       arbiter,
       beneficiary,
       value: value.toString(),
       handleApprove: async () => {
-        escrowContract.on('Approved', () => {
-          document.getElementById(escrowContract.address).className =
-            'complete';
-          document.getElementById(escrowContract.address).innerText =
-            "✓ It's been approved!";
-        });
+        // Fetch the current signer each time before calling approve
+        //const signer = await provider.getSigner();
+        //const signerAddress = await signer.getAddress();
 
-        await approve(escrowContract, signer);
+        /* if (signerAddress !== arbiter) {
+          console.error("Error: Signer must be the arbiter to approve the contract");
+          return;
+        } */
+
+
+console.log("In handleApprove");
+
+        try {
+          await approve(escrowContract, arbiterObj);
+        } catch (err) {
+          console.error("Error in approve:", err);
+        }
       },
     };
 
     setEscrows([...escrows, escrow]);
+    return () => {
+      escrowContract.off('Approved', approvedListener);
+    };
   }
 
   return (

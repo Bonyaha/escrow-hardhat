@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
+import "hardhat/console.sol";
+
 contract Escrow {
 	address public arbiter;
 	address public beneficiary;
@@ -17,7 +19,8 @@ contract Escrow {
 	event Approved(uint);
 
 	function approve() external {
-		require(msg.sender == arbiter);
+		require(msg.sender == arbiter, "You are not authorize to approve!");
+		console.log('msg.sender is: ', msg.sender);
 		uint balance = address(this).balance;
 		(bool sent, ) = payable(beneficiary).call{value: balance}("");
  		require(sent, "Failed to send Ether");
