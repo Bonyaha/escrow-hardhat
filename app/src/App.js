@@ -1,6 +1,6 @@
 /* eslint-env es2020 */
 
-import { BrowserProvider } from 'ethers';
+import { BrowserProvider, parseEther, formatEther } from 'ethers';
 import { useEffect, useState } from 'react';
 import deploy from './deploy';
 import Escrow from './Escrow';
@@ -12,11 +12,14 @@ export async function approve(escrowContract, signer) {
   console.log('signer is: ', signer);
   console.log('contract is: ', escrowContract);
 
-  const balance = await provider.getBalance("0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC");
-    console.log("Balance for beneficiar is: ", balance.toString());
+  const balanceBefore = await provider.getBalance("0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC");
+  console.log("Balance for beneficiar is: ", balanceBefore.toString());
 
   const approveTxn = await escrowContract.connect(signer).approve();
   await approveTxn.wait();
+
+  const balanceAfter = await provider.getBalance("0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC");
+  console.log("Balance for beneficiar is: ", balanceAfter.toString());
 }
 
 function App() {
@@ -69,7 +72,11 @@ function App() {
   async function newContract() {
     const beneficiary = document.getElementById('beneficiary').value;
     const arbiter = document.getElementById('arbiter').value;
-    const value = BigInt(document.getElementById('wei').value);
+    //const value = BigInt(document.getElementById('wei').value);
+    const ethValue = document.getElementById('eth').value;
+    const value = parseEther(ethValue); // This converts ETH to Wei
+    console.log('Value in Wei:', value.toString());
+
     console.log('value is: ', value);
 
     const escrowContract = await deploy(signer, arbiter, beneficiary, value);
@@ -82,6 +89,7 @@ function App() {
     console.log(`Contract balance for ${contractAddress}:`, balance.toString());
 
     const approvedListener = (amount) => {
+      console.log('Contract approved with amount (ETH):', formatEther(amount));
       document.getElementById(contractAddress).className = 'complete';
       document.getElementById(contractAddress).innerText = "✓ It's been approved!";
     };
@@ -92,7 +100,9 @@ function App() {
       address: contractAddress,
       arbiter,
       beneficiary,
-      value: value.toString(),
+      //value: value.toString(),
+      value: ethValue, // Store the original ETH value for display
+      valueWei: value.toString(),
       handleApprove: async () => {
         // Fetch the current signer each time before calling approve
         //const signer = await provider.getSigner();
@@ -104,7 +114,7 @@ function App() {
         } */
 
 
-console.log("In handleApprove");
+        console.log("In handleApprove");
 
         try {
           await approve(escrowContract, arbiterObj);
@@ -135,8 +145,14 @@ console.log("In handleApprove");
         </label>
 
         <label>
-          Deposit Amount (in Wei)
-          <input type="text" id="wei" />
+          Deposit Amount (in ETH)
+          <input 
+            type="number" 
+            id="eth" 
+            step="0.01" 
+            min="0" 
+            placeholder="0.00"
+          />
         </label>
 
         <div
