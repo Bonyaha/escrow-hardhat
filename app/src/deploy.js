@@ -2,11 +2,11 @@ import { ethers } from 'ethers';
 import Escrow from './artifacts/contracts/Escrow.sol/Escrow';
 
 
-export default async function deploy(signer, arbiter, beneficiary, value) {
+export default async function deploy(signer, arbiters, beneficiary, value) {
   try {
     console.log('Starting deployment with:', {
       signer,
-      arbiter,
+      arbiters,
       beneficiary,
       value: value.toString() // Convert BigInt to string for logging
     });
@@ -18,7 +18,7 @@ export default async function deploy(signer, arbiter, beneficiary, value) {
     );
 
     console.log('Factory created, attempting deployment...');
-    const contract = await factory.deploy(arbiter, beneficiary, { value });
+    const contract = await factory.deploy(arbiters[0], arbiters[1], beneficiary, { value });
     console.log('contract:', contract);
     
     // Wait for deployment to complete

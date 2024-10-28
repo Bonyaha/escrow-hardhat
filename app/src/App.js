@@ -1,133 +1,103 @@
-/* eslint-env es2020 */
-
-import { BrowserProvider, parseEther, formatEther } from 'ethers';
 import { useEffect, useState } from 'react';
+import { BrowserProvider, parseEther, formatEther } from 'ethers';
 import deploy from './deploy';
 import Escrow from './Escrow';
 
 const provider = new BrowserProvider(window.ethereum);
 
-
-export async function approve(escrowContract, signer) {
-  console.log('signer is: ', signer);
-  console.log('contract is: ', escrowContract);
-
-  const balanceBefore = await provider.getBalance("0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC");
-  console.log("Balance for beneficiar is: ", balanceBefore.toString());
-
+export async function approve(escrowContract, signer, arbiterNumber) {
+  console.log(`Arbiter ${arbiterNumber} attempting to approve`);
   const approveTxn = await escrowContract.connect(signer).approve();
   await approveTxn.wait();
-
-  const balanceAfter = await provider.getBalance("0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC");
-  console.log("Balance for beneficiar is: ", balanceAfter.toString());
 }
 
 function App() {
   const [escrows, setEscrows] = useState([]);
   const [account, setAccount] = useState();
   const [signer, setSigner] = useState();
-  const [arbiterObj, setArbiter] = useState();
 
-  //const arbiter = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8';
   useEffect(() => {
     async function getAccounts() {
       const accounts = await provider.send('eth_requestAccounts', []);
-      console.log('Initial accounts:', accounts);
-
-      // In ethers.js v6, getSigner() returns a Promise and must be awaited
       const signerObj = await provider.getSigner();
-      const arbiterObj = await provider.getSigner(2);
-      //const arbiter = accounts[1];
-      console.log("Initial signer:", signerObj);
-      console.log('Arbiter object:', arbiterObj);
-      //console.log('Arbiter is: ', arbiter);
-
-
       setAccount(accounts[0]);
       setSigner(signerObj);
-      setArbiter(arbiterObj);
     }
-
     getAccounts();
-
-
-    // Listen for account changes and update signer
-    /*  window.ethereum.on('accountsChanged', async (accounts) => {
-       console.log('Accounts changed:', accounts);
- 
-       const signerObj = await provider.getSigner();
-       console.log('Updated signer after account change:', signerObj);
- 
-       setAccount(accounts[0]);
-       setSigner(signerObj);
-     }); */
-
-    // Clean up the listener when the component is unmounted
-    /* return () => {
-      window.ethereum.removeListener('accountsChanged', () => { });
-    }; */
   }, []);
 
+  // Centralize listener for "Approved" events
+  useEffect(() => {
+    escrows.forEach((escrow) => {
+      const { contract, arbiter1, arbiter2, address } = escrow;
+
+      const approvedListener = (arbiter, amount) => {
+        if (arbiter === arbiter1) {
+          updateEscrowApprovalStatus(address, 1);
+        } else if (arbiter === arbiter2) {
+          updateEscrowApprovalStatus(address, 2);
+        }
+      };
+
+      contract.on('Approved', approvedListener);
+
+      // Clean up event listeners when component is unmounted
+      return () => {
+        contract.off('Approved', approvedListener);
+      };
+    });
+  }, [escrows]);
 
   async function newContract() {
     const beneficiary = document.getElementById('beneficiary').value;
-    const arbiter = document.getElementById('arbiter').value;
-    //const value = BigInt(document.getElementById('wei').value);
+    const arbiter1 = document.getElementById('arbiter1').value;
+    const arbiter2 = document.getElementById('arbiter2').value;
     const ethValue = document.getElementById('eth').value;
-    const value = parseEther(ethValue); // This converts ETH to Wei
-    console.log('Value in Wei:', value.toString());
+    const value = parseEther(ethValue);
 
-    console.log('value is: ', value);
-
-    const escrowContract = await deploy(signer, arbiter, beneficiary, value);
-
-    // Get the deployed contract address using getAddress()
+    const arbiterObj1 = await provider.getSigner(arbiter1);
+    const arbiterObj2 = await provider.getSigner(arbiter2);
+    const escrowContract = await deploy(signer, [arbiter1, arbiter2], beneficiary, value);
     const contractAddress = await escrowContract.getAddress();
-    console.log('deployed contract address: ', contractAddress);
-
-    const balance = await provider.getBalance(contractAddress);
-    console.log(`Contract balance for ${contractAddress}:`, balance.toString());
-
-    const approvedListener = (amount) => {
-      console.log('Contract approved with amount (ETH):', formatEther(amount));
-      document.getElementById(contractAddress).className = 'complete';
-      document.getElementById(contractAddress).innerText = "✓ It's been approved!";
-    };
-
-    escrowContract.on('Approved', approvedListener);
 
     const escrow = {
       address: contractAddress,
-      arbiter,
+      arbiter1,
+      arbiter2,
       beneficiary,
-      //value: value.toString(),
-      value: ethValue, // Store the original ETH value for display
-      valueWei: value.toString(),
-      handleApprove: async () => {
-        // Fetch the current signer each time before calling approve
-        //const signer = await provider.getSigner();
-        //const signerAddress = await signer.getAddress();
-
-        /* if (signerAddress !== arbiter) {
-          console.error("Error: Signer must be the arbiter to approve the contract");
-          return;
-        } */
-
-
-        console.log("In handleApprove");
-
+      value: ethValue,
+      arbiter1Approved: false,
+      arbiter2Approved: false,
+      contract: escrowContract,
+      handleApprove: async (arbiterNumber) => {
         try {
-          await approve(escrowContract, arbiterObj);
+          if (arbiterNumber === 1) {
+            await approve(escrowContract, arbiterObj1, 1);
+          } else if (arbiterNumber === 2) {
+            await approve(escrowContract, arbiterObj2, 2);
+          }
         } catch (err) {
-          console.error("Error in approve:", err);
+          console.error(`Error in approve for arbiter ${arbiterNumber}:`, err);
         }
       },
     };
 
     setEscrows([...escrows, escrow]);
-    return () => {
-      escrowContract.off('Approved', approvedListener);
-    };
+  }
+
+  function updateEscrowApprovalStatus(contractAddress, arbiterNumber) {
+    setEscrows((prevEscrows) =>
+      prevEscrows.map((escrow) => {
+        if (escrow.address === contractAddress) {
+          return {
+            ...escrow,
+            arbiter1Approved: arbiterNumber === 1 ? true : escrow.arbiter1Approved,
+            arbiter2Approved: arbiterNumber === 2 ? true : escrow.arbiter2Approved,
+          };
+        }
+        return escrow;
+      })
+    );
   }
 
   return (
@@ -135,8 +105,13 @@ function App() {
       <div className="contract">
         <h1> New Contract </h1>
         <label>
-          Arbiter Address
-          <input type="text" id="arbiter" />
+          First Arbiter Address
+          <input type="text" id="arbiter1" />
+        </label>
+
+        <label>
+          Second Arbiter Address
+          <input type="text" id="arbiter2" />
         </label>
 
         <label>
@@ -146,11 +121,11 @@ function App() {
 
         <label>
           Deposit Amount (in ETH)
-          <input 
-            type="number" 
-            id="eth" 
-            step="0.01" 
-            min="0" 
+          <input
+            type="number"
+            id="eth"
+            step="0.01"
+            min="0"
             placeholder="0.00"
           />
         </label>
@@ -160,7 +135,6 @@ function App() {
           id="deploy"
           onClick={(e) => {
             e.preventDefault();
-
             newContract();
           }}
         >
@@ -170,11 +144,15 @@ function App() {
 
       <div className="existing-contracts">
         <h1> Existing Contracts </h1>
-
         <div id="container">
-          {escrows.map((escrow) => {
-            return <Escrow key={escrow.address} {...escrow} />;
-          })}
+          {escrows.map((escrow) => (
+            <Escrow
+              key={escrow.address}
+              {...escrow}
+              handleApprove1={() => escrow.handleApprove(1)}
+              handleApprove2={() => escrow.handleApprove(2)}
+            />
+          ))}
         </div>
       </div>
     </>

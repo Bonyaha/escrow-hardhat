@@ -1,18 +1,28 @@
 export default function Escrow({
   address,
-  arbiter,
+  arbiter1,
+  arbiter2,
+  arbiter1Approved,
+  arbiter2Approved,
   beneficiary,
   value,
-  handleApprove,
+  handleApprove1,
+  handleApprove2
 }) {
   console.log('Address is: ', address);
-  
+  const isApprovedByBoth = arbiter1Approved && arbiter2Approved;
+
   return (
     <div className="existing-contract">
       <ul className="fields">
         <li>
-          <div> Arbiter </div>
-          <div> {arbiter} </div>
+        <div>Arbiters</div>
+          <div>
+            <ul>
+              <li><strong>Arbiter 1:</strong> {arbiter1}</li>
+              <li><strong>Arbiter 2:</strong> {arbiter2}</li>
+            </ul>
+          </div>
         </li>
         <li>
           <div> Beneficiary </div>
@@ -22,17 +32,31 @@ export default function Escrow({
           <div> Value </div>
           <div> {value} ETH </div>
         </li>
-        <div
-          className="button"
-          id={address}
-          onClick={(e) => {
-            e.preventDefault();
-
-            handleApprove();
-          }}
-        >
-          Approve
-        </div>
+        
+        {isApprovedByBoth ? (
+          <div id={address} className="complete">✓ Approved by both arbiters!</div>
+        ) : (
+          <>
+            {!arbiter1Approved && (
+              <div
+                className="button"
+                id={`${address}-arbiter1`}
+                onClick={handleApprove1}
+              >
+                Approve by Arbiter 1
+              </div>
+            )}
+            {!arbiter2Approved && (
+              <div
+                className="button"
+                id={`${address}-arbiter2`}
+                onClick={handleApprove2}
+              >
+                Approve by Arbiter 2
+              </div>
+            )}
+          </>
+        )}
       </ul>
     </div>
   );
