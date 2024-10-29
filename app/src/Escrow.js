@@ -11,6 +11,11 @@ export default function Escrow({
 }) {
   console.log('Address is: ', address);
   const isApprovedByBoth = arbiter1Approved && arbiter2Approved;
+  console.log('arbiter1Approved', arbiter1Approved);
+  console.log('arbiter2Approved', arbiter2Approved);
+  
+  
+console.log('isApprovedByBoth: ', isApprovedByBoth);
 
   return (
     <div className="existing-contract">
@@ -19,8 +24,8 @@ export default function Escrow({
         <div>Arbiters</div>
           <div>
             <ul>
-              <li><strong>Arbiter 1:</strong> {arbiter1}</li>
-              <li><strong>Arbiter 2:</strong> {arbiter2}</li>
+              <li><strong>Arbiter 1: </strong> {arbiter1}</li>
+              <li><strong>Arbiter 2: </strong> {arbiter2}</li>
             </ul>
           </div>
         </li>

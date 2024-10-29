@@ -49,9 +49,12 @@ contract Escrow {
         uint balance = address(this).balance;
 
         if (isApprovedByArbiter1 && isApprovedByArbiter2) {
+            console.log('gonna to send this sum: ', balance);
             (bool sent, ) = payable(beneficiary).call{value: balance}("");
-            require(sent, "Failed to send Ether");            
+            require(sent, "Failed to send Ether");
+            console.log('balance is: ', balance);           
             isReleased = true;
         }
+        
     }
 }

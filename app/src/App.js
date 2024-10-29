@@ -5,10 +5,21 @@ import Escrow from './Escrow';
 
 const provider = new BrowserProvider(window.ethereum);
 
-export async function approve(escrowContract, signer, arbiterNumber) {
+export async function approve(escrowContract, arbiterNumber, beneficiar) {
+  console.log('in approve function');
+
+  const signer = await provider.getSigner();
   console.log(`Arbiter ${arbiterNumber} attempting to approve`);
+  console.log('signer is: ', signer);
+
+  const balanceBefore = await provider.getBalance(beneficiar);
+  console.log("Balance for beneficiar is: ", balanceBefore.toString());
+
   const approveTxn = await escrowContract.connect(signer).approve();
   await approveTxn.wait();
+
+  const balanceAfter = await provider.getBalance(beneficiar);
+  console.log("Balance for beneficiar after: ", balanceAfter.toString());
 }
 
 function App() {
@@ -19,11 +30,30 @@ function App() {
   useEffect(() => {
     async function getAccounts() {
       const accounts = await provider.send('eth_requestAccounts', []);
+      console.log('Initial accounts:', accounts);
+
       const signerObj = await provider.getSigner();
       setAccount(accounts[0]);
       setSigner(signerObj);
     }
-    getAccounts();
+
+    getAccounts();    
+    
+    // Listen for account changes and update signer
+      window.ethereum.on('accountsChanged', async (accounts) => {
+       console.log('Accounts changed:', accounts);
+ 
+       const signerObj = await provider.getSigner();
+       console.log('Updated signer after account change:', signerObj);
+ 
+       setAccount(accounts[0]);
+       setSigner(signerObj);
+     }); 
+
+    // Clean up the listener when the component is unmounted
+    return () => {
+      window.ethereum.removeListener('accountsChanged', () => { });
+    }; 
   }, []);
 
   // Centralize listener for "Approved" events
@@ -32,6 +62,12 @@ function App() {
       const { contract, arbiter1, arbiter2, address } = escrow;
 
       const approvedListener = (arbiter, amount) => {
+        console.log('in approvedListener');
+        console.log('arbiter is: ', arbiter);
+        console.log('arbiter1 is: ', arbiter1);
+
+
+
         if (arbiter === arbiter1) {
           updateEscrowApprovalStatus(address, 1);
         } else if (arbiter === arbiter2) {
@@ -47,6 +83,9 @@ function App() {
       };
     });
   }, [escrows]);
+
+  
+console.log('signer is: ', signer);
 
   async function newContract() {
     const beneficiary = document.getElementById('beneficiary').value;
@@ -72,9 +111,11 @@ function App() {
       handleApprove: async (arbiterNumber) => {
         try {
           if (arbiterNumber === 1) {
-            await approve(escrowContract, arbiterObj1, 1);
+            console.log('signer is: ', signer);
+            
+            await approve(escrowContract, 1,beneficiary);
           } else if (arbiterNumber === 2) {
-            await approve(escrowContract, arbiterObj2, 2);
+            await approve(escrowContract, 2,beneficiary);
           }
         } catch (err) {
           console.error(`Error in approve for arbiter ${arbiterNumber}:`, err);
@@ -86,6 +127,8 @@ function App() {
   }
 
   function updateEscrowApprovalStatus(contractAddress, arbiterNumber) {
+    console.log('in updateEscrowApprovalStatus');
+
     setEscrows((prevEscrows) =>
       prevEscrows.map((escrow) => {
         if (escrow.address === contractAddress) {

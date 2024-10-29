@@ -23,7 +23,12 @@ export default async function deploy(signer, arbiters, beneficiary, value) {
     
     // Wait for deployment to complete
     await contract.waitForDeployment();
-    console.log('Contract deployed at:', await contract.getAddress());
+    const contractAddress = await contract.getAddress();
+    console.log('Contract deployed at:', contractAddress);
+
+    const provider = signer.provider; // Assuming signer has a provider attached
+    const balance = await provider.getBalance(contractAddress);
+    console.log(`Contract balance for ${contractAddress}:`, ethers.formatEther(balance), 'ETH');
     
     return contract;
   } catch (error) {
