@@ -29,31 +29,32 @@ function App() {
 
   useEffect(() => {
     async function getAccounts() {
-      const accounts = await provider.send('eth_requestAccounts', []);
+      const accounts = await provider.send('eth_requestAccounts', []); //eth_requestAccounts method from MetaMask
       console.log('Initial accounts:', accounts);
 
+      // In ethers.js v6, getSigner() returns a Promise and must be awaited
       const signerObj = await provider.getSigner();
       setAccount(accounts[0]);
       setSigner(signerObj);
     }
 
-    getAccounts();    
-    
+    getAccounts();
+
     // Listen for account changes and update signer
-      window.ethereum.on('accountsChanged', async (accounts) => {
-       console.log('Accounts changed:', accounts);
- 
-       const signerObj = await provider.getSigner();
-       console.log('Updated signer after account change:', signerObj);
- 
-       setAccount(accounts[0]);
-       setSigner(signerObj);
-     }); 
+    window.ethereum.on('accountsChanged', async (accounts) => {
+      console.log('Accounts changed:', accounts);
+
+      const signerObj = await provider.getSigner();
+      console.log('Updated signer after account change:', signerObj);
+
+      setAccount(accounts[0]);
+      setSigner(signerObj);
+    });
 
     // Clean up the listener when the component is unmounted
     return () => {
       window.ethereum.removeListener('accountsChanged', () => { });
-    }; 
+    };
   }, []);
 
   // Centralize listener for "Approved" events
@@ -84,15 +85,15 @@ function App() {
     });
   }, [escrows]);
 
-  
-console.log('signer is: ', signer);
+
+  console.log('signer is: ', signer);
 
   async function newContract() {
     const beneficiary = document.getElementById('beneficiary').value;
     const arbiter1 = document.getElementById('arbiter1').value;
     const arbiter2 = document.getElementById('arbiter2').value;
     const ethValue = document.getElementById('eth').value;
-    const value = parseEther(ethValue);
+    const value = parseEther(ethValue); // This converts ETH to Wei
 
     const arbiterObj1 = await provider.getSigner(arbiter1);
     const arbiterObj2 = await provider.getSigner(arbiter2);
@@ -109,13 +110,22 @@ console.log('signer is: ', signer);
       arbiter2Approved: false,
       contract: escrowContract,
       handleApprove: async (arbiterNumber) => {
+        // Fetch the current signer each time before calling approve
+        const signer = await provider.getSigner();
+        const signerAddress = await signer.getAddress();
+        // Check if the signer is either arbiter1 or arbiter2
+        if (signerAddress !== arbiter1 && signerAddress !== arbiter2) {
+          console.error("Error: Signer must be one of the arbiters to approve the contract");
+          return;
+        }
+
         try {
           if (arbiterNumber === 1) {
             console.log('signer is: ', signer);
-            
-            await approve(escrowContract, 1,beneficiary);
+
+            await approve(escrowContract, 1, beneficiary);
           } else if (arbiterNumber === 2) {
-            await approve(escrowContract, 2,beneficiary);
+            await approve(escrowContract, 2, beneficiary);
           }
         } catch (err) {
           console.error(`Error in approve for arbiter ${arbiterNumber}:`, err);
