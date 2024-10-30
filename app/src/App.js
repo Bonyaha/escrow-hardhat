@@ -67,8 +67,6 @@ function App() {
         console.log('arbiter is: ', arbiter);
         console.log('arbiter1 is: ', arbiter1);
 
-
-
         if (arbiter === arbiter1) {
           updateEscrowApprovalStatus(address, 1);
         } else if (arbiter === arbiter2) {
@@ -95,8 +93,8 @@ function App() {
     const ethValue = document.getElementById('eth').value;
     const value = parseEther(ethValue); // This converts ETH to Wei
 
-    const arbiterObj1 = await provider.getSigner(arbiter1);
-    const arbiterObj2 = await provider.getSigner(arbiter2);
+    //const arbiterObj1 = await provider.getSigner(arbiter1);
+    //const arbiterObj2 = await provider.getSigner(arbiter2);
     const escrowContract = await deploy(signer, [arbiter1, arbiter2], beneficiary, value);
     const contractAddress = await escrowContract.getAddress();
 
