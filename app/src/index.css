@@ -68,3 +68,7 @@ input[type="text"] {
   color: #5aa75a;
   text-align: center;
 }
+
+.arbiter-label {
+  margin-right: 8px;
+}
