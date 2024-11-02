@@ -4,6 +4,9 @@
   "description": "Escrow Dapp built with Hardhat",
   "main": "index.js",
   "scripts": {
+    "server": "npx json-server --watch db.json --port 3001",
+    "client": "cd app && npm start",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -13,13 +16,16 @@
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.8",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.12",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "concurrently": "^9.0.1",
     "hardhat": "^2.22.13"
   },
   "browserslist": [
     "> 5%"
   ],
   "dependencies": {
+    "axios": "^1.7.7",
     "ethers": "^6.13.4",
+    "json-server": "^1.0.0-beta.3",
     "react": "^18.3.1"
   }
 }

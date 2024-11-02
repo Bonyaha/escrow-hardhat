@@ -9,10 +9,10 @@ export default function Escrow({
   handleApprove1,
   handleApprove2
 }) {
-  console.log('Address is: ', address);
+  //console.log('Address is: ', address);
   const isApprovedByBoth = arbiter1Approved && arbiter2Approved;
-  console.log('arbiter1Approved', arbiter1Approved);
-  console.log('arbiter2Approved', arbiter2Approved);
+  //console.log('arbiter1Approved', arbiter1Approved);
+  //console.log('arbiter2Approved', arbiter2Approved);
   
   
 console.log('isApprovedByBoth: ', isApprovedByBoth);
