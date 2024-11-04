@@ -1,12 +1,12 @@
 {
   "contracts": [
     {
-      "id": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "arbiter1": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-      "arbiter2": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
-      "beneficiary": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
-      "value": "5",
+      "id": "0xB15619ABFb318114764d32C847b804733E0C518d",
+      "address": "0xB15619ABFb318114764d32C847b804733E0C518d",
+      "arbiter1": "0xA28b85CaA93302484702aAfd8169F6D85a4865E0",
+      "arbiter2": "0xd3DdB5946e056d1c6760082076e976853c15EE03",
+      "beneficiary": "0x0903319974fa0E57a3F37b25825692142cDcdC60",
+      "value": "0.0001",
       "arbiter1Approved": true,
       "arbiter2Approved": true
     }

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import "hardhat/console.sol";
-
 contract Escrow {
     address public arbiter1;
     address public arbiter2;
@@ -33,10 +31,6 @@ contract Escrow {
         );
         require(!isReleased, "Funds have already been released");
 
-		console.log('arbiter1 is: ', arbiter1);
-		console.log('arbiter2 is: ', arbiter2);
-		console.log("msg.sender is: ", msg.sender);
-
         if (msg.sender == arbiter1) {
             require(!isApprovedByArbiter1, "Arbiter 1 has already approved");
             isApprovedByArbiter1 = true;
@@ -49,12 +43,9 @@ contract Escrow {
         uint balance = address(this).balance;
 
         if (isApprovedByArbiter1 && isApprovedByArbiter2) {
-            console.log('gonna to send this sum: ', balance);
             (bool sent, ) = payable(beneficiary).call{value: balance}("");
             require(sent, "Failed to send Ether");
-            console.log('balance is: ', balance);           
             isReleased = true;
         }
-        
     }
 }
